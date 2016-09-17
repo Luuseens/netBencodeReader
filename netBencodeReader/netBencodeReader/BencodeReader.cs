@@ -13,12 +13,24 @@ namespace netBencodeReader
 
     public sealed class BencodeReader
     {
+        /// <summary>
+        /// Stack to keep track how deep in a List/Dictionary structure we are.
+        /// </summary>
         private Stack<BencodeToken> tokenTypeStack = new Stack<BencodeToken>();
 
+        /// <summary>
+        /// Last found token type.
+        /// </summary>
         public BencodeToken TokenType { get; private set; }
     
+        /// <summary>
+        /// Last found token value.
+        /// </summary>
         public string TokenStringValue { get; private set; }
 
+        /// <summary>
+        /// String reader wrapping the Bencode string.
+        /// </summary>
         private StringReader stringReader;
 
         /// <summary>
