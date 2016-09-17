@@ -18,7 +18,7 @@ namespace netBencodeReader
         /// <summary>
         /// Stack to keep track how deep in a List/Dictionary structure we are.
         /// </summary>
-        private Stack<BencodeToken> tokenTypeStack = new Stack<BencodeToken>();
+        private readonly Stack<BencodeToken> tokenTypeStack = new Stack<BencodeToken>();
 
         /// <summary>
         /// Last found token type.
@@ -29,6 +29,11 @@ namespace netBencodeReader
         /// Last found token value.
         /// </summary>
         public string TokenStringValue { get; private set; }
+
+        /// <summary>
+        /// Sets the read state of the reader.
+        /// </summary>
+        public ReadState ReadState { get; private set; }
 
         /// <summary>
         /// String reader wrapping the Bencode string.
@@ -42,7 +47,11 @@ namespace netBencodeReader
         /// <returns>A new instance of BencodeReader.</returns>
         public static BencodeReader Create(StringReader stringRead)
         {
-            return new BencodeReader { stringReader = stringRead };
+            return new BencodeReader
+                       {
+                           stringReader = stringRead,
+                           ReadState = ReadState.Initial
+                       };
         }
 
         /// <summary>
@@ -60,12 +69,15 @@ namespace netBencodeReader
         /// <returns>True if something was read, false if the end of the string has been reached.</returns>
         public bool Read()
         {
+            this.ReadState = ReadState.InProgress;
             this.TokenType = BencodeToken.None;
             this.TokenStringValue = string.Empty;
 
             var readCharInt = this.stringReader.Read();
             if (readCharInt < 0)
             {
+                // We have reached the end of the document.
+                this.ReadState = ReadState.EndOfFile;
                 return false;
             }
 
@@ -104,6 +116,7 @@ namespace netBencodeReader
                 else
                 {
                     // Nothing else should have an ending 
+                    this.ReadState = ReadState.Error;
                     throw new BencodeParseException("Unexpected termination character 'e'.");
                 }
 
@@ -128,7 +141,8 @@ namespace netBencodeReader
                     readCharInt = this.stringReader.Read();
                     if (readCharInt < 0)
                     {
-                        throw new BencodeParseException("Unexpected end of BEncode string.");
+                        this.ReadState = ReadState.Error;
+                        throw new BencodeParseException("Unexpected end of BEncode document.");
                     }
 
                     chars[i] = Convert.ToChar(readCharInt);
@@ -147,6 +161,7 @@ namespace netBencodeReader
 
                 if (num.Length == 0)
                 {
+                    this.ReadState = ReadState.Error;
                     throw new BencodeParseException("Unexpected value while extracting a Bencode integer.");
                 }
 
@@ -157,7 +172,8 @@ namespace netBencodeReader
                 return true;
             }
 
-            return false;
+            this.ReadState = ReadState.Error;
+            throw new BencodeParseException($"Unexpected character '{readChar}' found while parsing Bencode document.");
         }
 
         /// <summary>
@@ -208,14 +224,14 @@ namespace netBencodeReader
             var readCharInt = this.stringReader.Read();
             if (readCharInt < 0)
             {
-                throw new BencodeParseException("Unexpected end of Bencode string.");
+                throw new BencodeParseException("Unexpected end of Bencode document.");
             }
 
             var readChar = Convert.ToChar(readCharInt);
 
             if (readChar != expected)
             {
-                throw new BencodeParseException($"Unexpected character found while parsing Bencode string. Expected '{expected}', encountered '{readChar}'.");
+                throw new BencodeParseException($"Unexpected character found while parsing Bencode document. Expected '{expected}', encountered '{readChar}'.");
             }
         }
 
