@@ -56,6 +56,7 @@ namespace netBencodeReader
 
             var readChar = Convert.ToChar(readCharInt);
             
+            // Handle a dictionary, e.g. "d4:name3:jone"
             if (readChar == 'd')
             {
                 this.tokenTypeStack.Push(BencodeToken.StartDictionary);
@@ -63,6 +64,7 @@ namespace netBencodeReader
                 return true;
             }
 
+            // Handle a list, e.g. "l5:helloi123ee"
             if (readChar == 'l')
             {
                 this.tokenTypeStack.Push(BencodeToken.StartArray);
@@ -70,6 +72,7 @@ namespace netBencodeReader
                 return true;
             }
 
+            // Handle the end of a list or a dictionary
             if (readChar == 'e')
             {
                 var currentType = this.tokenTypeStack.Peek();
@@ -93,49 +96,49 @@ namespace netBencodeReader
                 return true;
             }
 
+            // Handle a string, e.g. "4:name"
             if (IsDigit(readChar))
             {
-                // TODO: optimize this!
                 this.TokenType = BencodeToken.String;
-                string num = "" + readChar;
+                var numString = readChar + this.ReadDigitsToEnd();
 
-                while (IsDigit(this.tempSrcString[++this.pointer]))
+                this.ReadAndVerifyExpectedCharacter(':');
+                
+                var strLen = int.Parse(numString);
+
+                var chars = new char[strLen];
+
+                for (int i = 0; i < strLen; i++)
                 {
-                    num += this.tempSrcString[this.pointer];
+                    readCharInt = this.stringReader.Read();
+                    if (readCharInt < 0)
+                    {
+                        throw new ArgumentException();
+                    }
+
+                    chars[i] = Convert.ToChar(readCharInt);
                 }
 
-                if (this.tempSrcString[this.pointer++] != ':')
-                {
-                    throw new ArgumentException();
-                }
-
-                var strLen = int.Parse(num);
-                this.TokenStringValue = this.tempSrcString.Substring(this.pointer, strLen);
-                this.pointer += strLen;
+                this.TokenStringValue = new string(chars);
 
                 return true;
             }
 
-            if (this.tempSrcString[this.pointer] == 'i')
+            // Handle an integer, e.g. "i2345e"
+            if (readChar == 'i')
             {
                 this.TokenType = BencodeToken.Integer;
-                var num = string.Empty;
+                var num = this.ReadDigitsToEnd();
 
-                while (IsDigit(this.tempSrcString[++this.pointer]))
-                {
-                    num += this.tempSrcString[this.pointer];
-                }
-
-                if (this.tempSrcString[this.pointer] != 'e')
+                if (num.Length == 0)
                 {
                     throw new ArgumentException();
                 }
-                
-                this.pointer++;
+
+                this.ReadAndVerifyExpectedCharacter('e');
 
                 this.TokenStringValue = num;
-
-
+                
                 return true;
             }
 
@@ -147,16 +150,70 @@ namespace netBencodeReader
         /// After this has run, stringReader will be pointing at the first following non-digit value.
         /// </summary>
         /// <returns></returns>
-        private string ReadNumber()
+        private string ReadDigitsToEnd()
         {
             var str = string.Empty;
-            var peek = 
+            var peek = this.stringReader.Peek();
+
+            var keepGoing = true;
+
+            while (keepGoing)
+            {
+                keepGoing = false;
+
+                if (peek > 0)
+                {
+                    var asChar = Convert.ToChar(peek);
+
+                    if (IsDigit(asChar))
+                    {
+                        // This char was a number, run through at least once to check the next one.
+                        keepGoing = true;
+
+                        // TODO: optimize this!
+                        str += asChar;
+
+                        // Advance the pointer
+                        this.stringReader.Read();
+
+                        // Peek at the next value
+                        peek = this.stringReader.Peek();
+                    }
+                }
+            }
+
+            return str;
         }
 
+        /// <summary>
+        /// Reads a single character from the stringReader and ensures it exists and matches the expected one.
+        /// </summary>
+        /// <param name="expected">Expected character.</param>
+        private void ReadAndVerifyExpectedCharacter(char expected)
+        {
+            var readCharInt = this.stringReader.Read();
+            if (readCharInt < 0)
+            {
+                throw new ArgumentException();
+            }
+
+            var readChar = Convert.ToChar(readCharInt);
+
+            if (readChar != expected)
+            {
+                throw new ArgumentException();
+            }
+        }
+
+        /// <summary>
+        /// Checks whether the character is a digit or not.
+        /// </summary>
+        /// <param name="c">Character to check.</param>
+        /// <returns>True if the character is in the range from '0' to '9', false otherwise.</returns>
         private static bool IsDigit(char c)
         {
             return c >= '0' && c <= '9';
         }
-
     }
 }
+ 
