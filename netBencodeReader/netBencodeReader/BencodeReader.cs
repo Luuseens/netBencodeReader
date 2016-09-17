@@ -9,6 +9,7 @@ namespace netBencodeReader
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.Text;
 
     public sealed class BencodeReader
     {
@@ -152,7 +153,7 @@ namespace netBencodeReader
         /// <returns></returns>
         private string ReadDigitsToEnd()
         {
-            var str = string.Empty;
+            var str = new StringBuilder();
             var peek = this.stringReader.Peek();
 
             var keepGoing = true;
@@ -170,8 +171,7 @@ namespace netBencodeReader
                         // This char was a number, run through at least once to check the next one.
                         keepGoing = true;
 
-                        // TODO: optimize this!
-                        str += asChar;
+                        str.Append(asChar);
 
                         // Advance the pointer
                         this.stringReader.Read();
@@ -182,7 +182,7 @@ namespace netBencodeReader
                 }
             }
 
-            return str;
+            return str.ToString();
         }
 
         /// <summary>
