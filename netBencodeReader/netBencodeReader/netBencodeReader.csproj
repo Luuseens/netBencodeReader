@@ -50,6 +50,8 @@
     <Compile Include="BencodeJsonReader.cs" />
     <Compile Include="BencodeReader.cs" />
     <Compile Include="BencodeToken.cs" />
+    <Compile Include="Exceptions\BencodeParseException.cs" />
+    <Compile Include="Exceptions\BencodeException.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

@@ -11,6 +11,8 @@ namespace netBencodeReader
     using System.IO;
     using System.Text;
 
+    using netBencodeReader.Exceptions;
+
     public sealed class BencodeReader
     {
         /// <summary>
@@ -102,7 +104,7 @@ namespace netBencodeReader
                 else
                 {
                     // Nothing else should have an ending 
-                    throw new ArgumentException();
+                    throw new BencodeParseException("Unexpected termination character 'e'.");
                 }
 
                 this.tokenTypeStack.Push(BencodeToken.StartDictionary);
@@ -126,7 +128,7 @@ namespace netBencodeReader
                     readCharInt = this.stringReader.Read();
                     if (readCharInt < 0)
                     {
-                        throw new ArgumentException();
+                        throw new BencodeParseException("Unexpected end of BEncode string.");
                     }
 
                     chars[i] = Convert.ToChar(readCharInt);
@@ -145,7 +147,7 @@ namespace netBencodeReader
 
                 if (num.Length == 0)
                 {
-                    throw new ArgumentException();
+                    throw new BencodeParseException("Unexpected value while extracting a Bencode integer.");
                 }
 
                 this.ReadAndVerifyExpectedCharacter('e');
@@ -206,14 +208,14 @@ namespace netBencodeReader
             var readCharInt = this.stringReader.Read();
             if (readCharInt < 0)
             {
-                throw new ArgumentException();
+                throw new BencodeParseException("Unexpected end of Bencode string.");
             }
 
             var readChar = Convert.ToChar(readCharInt);
 
             if (readChar != expected)
             {
-                throw new ArgumentException();
+                throw new BencodeParseException($"Unexpected character found while parsing Bencode string. Expected '{expected}', encountered '{readChar}'.");
             }
         }
 
