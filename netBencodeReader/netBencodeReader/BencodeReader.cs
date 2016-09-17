@@ -12,10 +12,6 @@ namespace netBencodeReader
 
     public sealed class BencodeReader
     {
-        private string tempSrcString = "d4:name5:randy3:agei29e4:miscli1e2:lvee";
-
-        private int pointer;
-
         private Stack<BencodeToken> tokenTypeStack = new Stack<BencodeToken>();
 
         public BencodeToken TokenType { get; private set; }
@@ -39,7 +35,6 @@ namespace netBencodeReader
         /// </summary>
         private BencodeReader()
         {
-            
         }
 
         /// <summary>
@@ -50,34 +45,33 @@ namespace netBencodeReader
         /// <returns>True if something was read, false if the end of the string has been reached.</returns>
         public bool Read()
         {
-
             this.TokenType = BencodeToken.None;
             this.TokenStringValue = string.Empty;
 
-            if (pointer >= this.tempSrcString.Length)
+            var readCharInt = this.stringReader.Read();
+            if (readCharInt < 0)
             {
                 return false;
             }
 
-            if (this.tempSrcString[this.pointer] == 'd')
+            var readChar = Convert.ToChar(readCharInt);
+            
+            if (readChar == 'd')
             {
-                this.pointer++;
                 this.tokenTypeStack.Push(BencodeToken.StartDictionary);
                 this.TokenType = BencodeToken.StartDictionary;
                 return true;
             }
 
-            if (this.tempSrcString[this.pointer] == 'l')
+            if (readChar == 'l')
             {
-                this.pointer++;
                 this.tokenTypeStack.Push(BencodeToken.StartArray);
                 this.TokenType = BencodeToken.StartArray;
                 return true;
             }
 
-            if (this.tempSrcString[this.pointer] == 'e')
+            if (readChar == 'e')
             {
-                this.pointer++;
                 var currentType = this.tokenTypeStack.Peek();
 
                 if (currentType == BencodeToken.StartDictionary)
@@ -99,10 +93,11 @@ namespace netBencodeReader
                 return true;
             }
 
-            if (IsDigit(this.tempSrcString[this.pointer]))
+            if (IsDigit(readChar))
             {
+                // TODO: optimize this!
                 this.TokenType = BencodeToken.String;
-                string num = "" + this.tempSrcString[this.pointer];
+                string num = "" + readChar;
 
                 while (IsDigit(this.tempSrcString[++this.pointer]))
                 {
@@ -145,6 +140,17 @@ namespace netBencodeReader
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Reads all the characters from the stringReader as long as they are digits. 
+        /// After this has run, stringReader will be pointing at the first following non-digit value.
+        /// </summary>
+        /// <returns></returns>
+        private string ReadNumber()
+        {
+            var str = string.Empty;
+            var peek = 
         }
 
         private static bool IsDigit(char c)
