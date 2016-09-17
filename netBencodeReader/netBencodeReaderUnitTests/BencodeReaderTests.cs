@@ -35,7 +35,7 @@ namespace netBencodeReaderUnitTests
             Assert.AreEqual(ReadState.InProgress, tokenizer.ReadState);
             Assert.AreEqual(BencodeToken.StartDictionary, tokenizer.TokenType);
             Assert.AreEqual(string.Empty, tokenizer.TokenStringValue);
-            
+
             // Pop the string '4:name' off the document
             Assert.IsTrue(tokenizer.Read());
             Assert.AreEqual(ReadState.InProgress, tokenizer.ReadState);
@@ -98,6 +98,18 @@ namespace netBencodeReaderUnitTests
 
             Assert.IsFalse(tokenizer.Read());
             Assert.AreEqual(ReadState.EndOfFile, tokenizer.ReadState);
+        }
+
+        /// <summary>
+        /// Verifies the value of negative integers can be read.
+        /// </summary>
+        [TestMethod]
+        public void BencodeReader_UnitTests_VerifyNegativeIntegers()
+        {
+            var tokenizer = BencodeReader.Create(new StringReader("i-24e"));
+            tokenizer.Read();
+            Assert.AreEqual("-24", tokenizer.TokenStringValue);
+            Assert.AreEqual(BencodeToken.Integer, tokenizer.TokenType);
         }
     }
 }

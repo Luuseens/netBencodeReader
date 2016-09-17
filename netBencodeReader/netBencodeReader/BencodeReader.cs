@@ -48,10 +48,10 @@ namespace netBencodeReader
         public static BencodeReader Create(StringReader stringRead)
         {
             return new BencodeReader
-                       {
-                           stringReader = stringRead,
-                           ReadState = ReadState.Initial
-                       };
+            {
+                stringReader = stringRead,
+                ReadState = ReadState.Initial
+            };
         }
 
         /// <summary>
@@ -136,7 +136,7 @@ namespace netBencodeReader
 
                 var chars = new char[strLen];
 
-                for (int i = 0; i < strLen; i++)
+                for (var i = 0; i < strLen; i++)
                 {
                     readCharInt = this.stringReader.Read();
                     if (readCharInt < 0)
@@ -157,9 +157,22 @@ namespace netBencodeReader
             if (readChar == 'i')
             {
                 this.TokenType = BencodeToken.Integer;
-                var num = this.ReadDigitsToEnd();
 
-                if (num.Length == 0)
+                string num;
+
+                // Peek at the stringReader to see if the integer starts with '-'.
+                var peekValue = this.stringReader.Peek();
+                if (peekValue > -1 && Convert.ToChar(peekValue) == '-')
+                {
+                    this.stringReader.Read();
+                    num = "-" + this.ReadDigitsToEnd();
+                }
+                else
+                {
+                    num = this.ReadDigitsToEnd();
+                }
+
+                if (num.Length == 0 || num == "-")
                 {
                     this.ReadState = ReadState.Error;
                     throw new BencodeParseException("Unexpected value while extracting a Bencode integer.");
