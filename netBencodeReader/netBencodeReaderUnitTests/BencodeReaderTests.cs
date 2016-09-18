@@ -39,7 +39,7 @@ namespace netBencodeReaderUnitTests
             // Pop the string '4:name' off the document
             Assert.IsTrue(tokenizer.Read());
             Assert.AreEqual(ReadState.InProgress, tokenizer.ReadState);
-            Assert.AreEqual(BencodeToken.String, tokenizer.TokenType);
+            Assert.AreEqual(BencodeToken.DictionaryKey, tokenizer.TokenType);
             Assert.AreEqual("name", tokenizer.TokenStringValue);
 
             // Pop the string '5:randy' off the document
@@ -51,7 +51,7 @@ namespace netBencodeReaderUnitTests
             // Pop the string '3:age' off the document
             Assert.IsTrue(tokenizer.Read());
             Assert.AreEqual(ReadState.InProgress, tokenizer.ReadState);
-            Assert.AreEqual(BencodeToken.String, tokenizer.TokenType);
+            Assert.AreEqual(BencodeToken.DictionaryKey, tokenizer.TokenType);
             Assert.AreEqual("age", tokenizer.TokenStringValue);
 
             // Pop the int 'i29e' off the document
@@ -63,7 +63,7 @@ namespace netBencodeReaderUnitTests
             // Pop the string '4:misc' off the document
             Assert.IsTrue(tokenizer.Read());
             Assert.AreEqual(ReadState.InProgress, tokenizer.ReadState);
-            Assert.AreEqual(BencodeToken.String, tokenizer.TokenType);
+            Assert.AreEqual(BencodeToken.DictionaryKey, tokenizer.TokenType);
             Assert.AreEqual("misc", tokenizer.TokenStringValue);
 
             // Pop the beginning of the list 'l' off the document
@@ -110,6 +110,139 @@ namespace netBencodeReaderUnitTests
             tokenizer.Read();
             Assert.AreEqual("-24", tokenizer.TokenStringValue);
             Assert.AreEqual(BencodeToken.Integer, tokenizer.TokenType);
+        }
+
+        /// <summary>
+        /// Attempts to tokenize the bencode document with deeper dictionary structure. 
+        /// </summary>
+        [TestMethod]
+        public void BencodeReader_UnitTests_VerifyDeepDictionaries()
+        {
+            /*  d
+                  1:a 
+                  1:b
+
+                  1:c 
+                  d
+                    2:ca
+                    2:cb
+  
+                    3:cc
+                    d
+                      3:cca
+                      de
+                    e
+  
+                    2:cd
+                    l 
+                      3:cda
+                      3:cdb
+                      3:cdc
+                    e
+                  e
+
+                  1:d
+                  1:e
+                e            */
+
+            var tokenizer = BencodeReader.Create(new StringReader("d1:a1:b1:cd2:ca2:cb2:ccd3:ccadee2:cdl3:cda3:cdb3:cdcee1:d1:ee"));
+
+            Assert.IsTrue(tokenizer.Read());
+            Assert.AreEqual(BencodeToken.StartDictionary, tokenizer.TokenType);
+            Assert.AreEqual(string.Empty, tokenizer.TokenStringValue);
+
+            Assert.IsTrue(tokenizer.Read());
+            Assert.AreEqual(BencodeToken.DictionaryKey, tokenizer.TokenType);
+            Assert.AreEqual("a", tokenizer.TokenStringValue);
+
+            Assert.IsTrue(tokenizer.Read());
+            Assert.AreEqual(BencodeToken.String, tokenizer.TokenType);
+            Assert.AreEqual("b", tokenizer.TokenStringValue);
+
+            Assert.IsTrue(tokenizer.Read());
+            Assert.AreEqual(BencodeToken.DictionaryKey, tokenizer.TokenType);
+            Assert.AreEqual("c", tokenizer.TokenStringValue);
+
+            Assert.IsTrue(tokenizer.Read());
+            Assert.AreEqual(BencodeToken.StartDictionary, tokenizer.TokenType);
+            Assert.AreEqual(string.Empty, tokenizer.TokenStringValue);
+
+            Assert.IsTrue(tokenizer.Read());
+            Assert.AreEqual(BencodeToken.DictionaryKey, tokenizer.TokenType);
+            Assert.AreEqual("ca", tokenizer.TokenStringValue);
+
+            Assert.IsTrue(tokenizer.Read());
+            Assert.AreEqual(BencodeToken.String, tokenizer.TokenType);
+            Assert.AreEqual("cb", tokenizer.TokenStringValue);
+
+            Assert.IsTrue(tokenizer.Read());
+            Assert.AreEqual(BencodeToken.DictionaryKey, tokenizer.TokenType);
+            Assert.AreEqual("cc", tokenizer.TokenStringValue);
+
+            Assert.IsTrue(tokenizer.Read());
+            Assert.AreEqual(BencodeToken.StartDictionary, tokenizer.TokenType);
+            Assert.AreEqual(string.Empty, tokenizer.TokenStringValue);
+
+            Assert.IsTrue(tokenizer.Read());
+            Assert.AreEqual(BencodeToken.DictionaryKey, tokenizer.TokenType);
+            Assert.AreEqual("cca", tokenizer.TokenStringValue);
+
+            Assert.IsTrue(tokenizer.Read());
+            Assert.AreEqual(BencodeToken.StartDictionary, tokenizer.TokenType);
+            Assert.AreEqual(string.Empty, tokenizer.TokenStringValue);
+
+            Assert.IsTrue(tokenizer.Read());
+            Assert.AreEqual(BencodeToken.EndDictionary, tokenizer.TokenType);
+            Assert.AreEqual(string.Empty, tokenizer.TokenStringValue);
+
+            Assert.IsTrue(tokenizer.Read());
+            Assert.AreEqual(BencodeToken.EndDictionary, tokenizer.TokenType);
+            Assert.AreEqual(string.Empty, tokenizer.TokenStringValue);
+
+            Assert.IsTrue(tokenizer.Read());
+            Assert.AreEqual(BencodeToken.DictionaryKey, tokenizer.TokenType);
+            Assert.AreEqual("cd", tokenizer.TokenStringValue);
+
+            Assert.IsTrue(tokenizer.Read());
+            Assert.AreEqual(BencodeToken.StartArray, tokenizer.TokenType);
+            Assert.AreEqual(string.Empty, tokenizer.TokenStringValue);
+
+            Assert.IsTrue(tokenizer.Read());
+            Assert.AreEqual(BencodeToken.String, tokenizer.TokenType);
+            Assert.AreEqual("cda", tokenizer.TokenStringValue);
+
+            Assert.IsTrue(tokenizer.Read());
+            Assert.AreEqual(BencodeToken.String, tokenizer.TokenType);
+            Assert.AreEqual("cdb", tokenizer.TokenStringValue);
+
+            Assert.IsTrue(tokenizer.Read());
+            Assert.AreEqual(BencodeToken.String, tokenizer.TokenType);
+            Assert.AreEqual("cdc", tokenizer.TokenStringValue);
+
+            Assert.IsTrue(tokenizer.Read());
+            Assert.AreEqual(BencodeToken.EndArray, tokenizer.TokenType);
+            Assert.AreEqual(string.Empty, tokenizer.TokenStringValue);
+
+            Assert.IsTrue(tokenizer.Read());
+            Assert.AreEqual(BencodeToken.EndDictionary, tokenizer.TokenType);
+            Assert.AreEqual(string.Empty, tokenizer.TokenStringValue);
+
+            Assert.IsTrue(tokenizer.Read());
+            Assert.AreEqual(BencodeToken.DictionaryKey, tokenizer.TokenType);
+            Assert.AreEqual("d", tokenizer.TokenStringValue);
+
+            Assert.IsTrue(tokenizer.Read());
+            Assert.AreEqual(BencodeToken.String, tokenizer.TokenType);
+            Assert.AreEqual("e", tokenizer.TokenStringValue);
+
+            Assert.IsTrue(tokenizer.Read());
+            Assert.AreEqual(BencodeToken.EndDictionary, tokenizer.TokenType);
+            Assert.AreEqual(string.Empty, tokenizer.TokenStringValue);
+
+            Assert.IsFalse(tokenizer.Read());
+            Assert.AreEqual(ReadState.EndOfFile, tokenizer.ReadState);
+            Assert.AreEqual(BencodeToken.None, tokenizer.TokenType);
+            Assert.AreEqual(string.Empty, tokenizer.TokenStringValue);
         }
     }
 }

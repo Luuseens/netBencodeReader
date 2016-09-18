@@ -9,6 +9,7 @@ namespace netBencodeReader
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.Linq;
     using System.Text;
 
     using netBencodeReader.Exceptions;
@@ -18,7 +19,7 @@ namespace netBencodeReader
         /// <summary>
         /// Stack to keep track how deep in a List/Dictionary structure we are.
         /// </summary>
-        private readonly Stack<BencodeToken> tokenTypeStack = new Stack<BencodeToken>();
+        private readonly Stack<BencodeParseStackState> tokenTypeStack = new Stack<BencodeParseStackState>();
 
         /// <summary>
         /// Last found token type.
@@ -72,6 +73,7 @@ namespace netBencodeReader
             this.ReadState = ReadState.InProgress;
             this.TokenType = BencodeToken.None;
             this.TokenStringValue = string.Empty;
+            this.SwapDictionaryKeyState();
 
             var readCharInt = this.stringReader.Read();
             if (readCharInt < 0)
@@ -86,7 +88,12 @@ namespace netBencodeReader
             // Handle a dictionary, e.g. "d4:name3:jone"
             if (readChar == 'd')
             {
-                this.tokenTypeStack.Push(BencodeToken.StartDictionary);
+                if (this.DictionaryKeyExpected())
+                {
+                    throw new BencodeParseException("Expected a string for dictionary's key, found a new dictionary instead.");
+                }
+
+                this.tokenTypeStack.Push(new BencodeParseStackState(BencodeToken.StartDictionary));
                 this.TokenType = BencodeToken.StartDictionary;
                 return true;
             }
@@ -94,7 +101,12 @@ namespace netBencodeReader
             // Handle a list, e.g. "l5:helloi123ee"
             if (readChar == 'l')
             {
-                this.tokenTypeStack.Push(BencodeToken.StartArray);
+                if (this.DictionaryKeyExpected())
+                {
+                    throw new BencodeParseException("Expected a string for dictionary's key, found an array instead.");
+                }
+
+                this.tokenTypeStack.Push(new BencodeParseStackState(BencodeToken.StartArray));
                 this.TokenType = BencodeToken.StartArray;
                 return true;
             }
@@ -102,32 +114,44 @@ namespace netBencodeReader
             // Handle the end of a list or a dictionary
             if (readChar == 'e')
             {
-                var currentType = this.tokenTypeStack.Peek();
+                var dictionaryKeyExpected = this.DictionaryKeyExpected();
 
-                if (currentType == BencodeToken.StartDictionary)
+                if (!this.tokenTypeStack.Any())
                 {
-                    this.tokenTypeStack.Pop();
-                    this.TokenType = BencodeToken.EndDictionary;
-                } else if (currentType == BencodeToken.StartArray)
-                {
-                    this.tokenTypeStack.Pop();
-                    this.TokenType = BencodeToken.EndArray;
-                }
-                else
-                {
-                    // Nothing else should have an ending 
                     this.ReadState = ReadState.Error;
                     throw new BencodeParseException("Unexpected termination character 'e'.");
                 }
 
-                this.tokenTypeStack.Push(BencodeToken.StartDictionary);
+                var currentType = this.tokenTypeStack.Pop();
+
+                switch (currentType.CurrenToken)
+                {
+                    case BencodeToken.StartDictionary:
+                        if (!dictionaryKeyExpected)
+                        {
+                            throw new BencodeParseException("Expected a value for the key-value pair in dictionary, instead found end of dictionary.");
+                        }
+
+                        this.TokenType = BencodeToken.EndDictionary;
+                        break;
+                    case BencodeToken.StartArray:
+                        this.TokenType = BencodeToken.EndArray;
+                        break;
+                    default:
+                        // Nothing else should have an ending 
+                        this.ReadState = ReadState.Error;
+                        throw new BencodeParseException("Unexpected termination character 'e'.");
+                }
+
                 return true;
             }
 
             // Handle a string, e.g. "4:name"
             if (IsDigit(readChar))
             {
-                this.TokenType = BencodeToken.String;
+                // Check whether we are in a dictionary and expecting a key.
+                this.TokenType = this.DictionaryKeyExpected() ? BencodeToken.DictionaryKey : BencodeToken.String;
+
                 var numString = readChar + this.ReadDigitsToEnd();
 
                 this.ReadAndVerifyExpectedCharacter(':');
@@ -156,6 +180,11 @@ namespace netBencodeReader
             // Handle an integer, e.g. "i2345e"
             if (readChar == 'i')
             {
+                if (this.DictionaryKeyExpected())
+                {
+                    throw new BencodeParseException("Expected a string for dictionary's key, found an int instead.");
+                }
+
                 this.TokenType = BencodeToken.Integer;
 
                 string num;
@@ -187,6 +216,39 @@ namespace netBencodeReader
 
             this.ReadState = ReadState.Error;
             throw new BencodeParseException($"Unexpected character '{readChar}' found while parsing Bencode document.");
+        }
+
+        /// <summary>
+        /// Identifies whether the current key is expected to be a 
+        /// </summary>
+        /// <returns>True if the next token is expected to be a dictionary key, false otherwise.</returns>
+        private bool DictionaryKeyExpected()
+        {
+            // If the parser is not inside any structure, return false.
+            if (!this.tokenTypeStack.Any())
+            {
+                return false;
+            }
+
+            var topOfStack = this.tokenTypeStack.Peek();
+            return topOfStack.CurrenToken == BencodeToken.StartDictionary && topOfStack.DictionaryKeyExpected;
+        }
+
+        /// <summary>
+        /// If the reader is currently reading through a dictionary, 
+        /// the type of token needs to be inverted every other time to switch between key and value type.
+        /// </summary>
+        private void SwapDictionaryKeyState()
+        {
+            if (this.tokenTypeStack.Any())
+            {
+                var topOfStack = this.tokenTypeStack.Peek();
+
+                if (topOfStack.CurrenToken == BencodeToken.StartDictionary)
+                {
+                    topOfStack.DictionaryKeyExpected = !topOfStack.DictionaryKeyExpected;
+                }
+            }
         }
 
         /// <summary>

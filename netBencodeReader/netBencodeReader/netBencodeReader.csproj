@@ -46,6 +46,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BencodeParseStackState.cs" />
     <Compile Include="BencodeReader.cs" />
     <Compile Include="BencodeToken.cs" />
     <Compile Include="Exceptions\BencodeParseException.cs" />
