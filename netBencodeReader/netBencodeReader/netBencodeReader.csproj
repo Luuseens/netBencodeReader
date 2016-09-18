@@ -47,8 +47,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BencodeParseStackState.cs" />
+    <Compile Include="BencodeWriter.cs" />
     <Compile Include="BencodeReader.cs" />
     <Compile Include="BencodeToken.cs" />
+    <Compile Include="DataSourceEnum.cs" />
     <Compile Include="Exceptions\BencodeParseException.cs" />
     <Compile Include="Exceptions\BencodeException.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

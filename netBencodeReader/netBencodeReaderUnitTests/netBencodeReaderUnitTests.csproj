@@ -50,6 +50,8 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="BencodeReaderAlternateSourcesTests.cs" />
+    <Compile Include="BencodeWriterTests.cs" />
     <Compile Include="BencodeReaderTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
