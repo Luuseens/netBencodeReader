@@ -113,6 +113,64 @@ namespace netBencodeReaderUnitTests
         }
 
         /// <summary>
+        /// Verifies empty lists are considered valid.
+        /// </summary>
+        [TestMethod]
+        public void BencodeReader_UnitTests_VerifyEmptyList()
+        {
+            var tokenizer = BencodeReader.Create(new StringReader("le"));
+            tokenizer.Read();
+            Assert.AreEqual(BencodeToken.StartArray, tokenizer.TokenType);
+
+            tokenizer.Read();
+            Assert.AreEqual(BencodeToken.EndArray, tokenizer.TokenType);
+        }
+
+        /// <summary>
+        /// Verifies empty dictionaries are considered valid.
+        /// </summary>
+        [TestMethod]
+        public void BencodeReader_UnitTests_VerifyEmptyDictionary()
+        {
+            var tokenizer = BencodeReader.Create(new StringReader("de"));
+            tokenizer.Read();
+            Assert.AreEqual(BencodeToken.StartDictionary, tokenizer.TokenType);
+
+            tokenizer.Read();
+            Assert.AreEqual(BencodeToken.EndDictionary, tokenizer.TokenType);
+        }
+
+        /// <summary>
+        /// Verifies empty strings are considered valid.
+        /// </summary>
+        [TestMethod]
+        public void BencodeReader_UnitTests_VerifyEmptyStrings()
+        {
+            var tokenizer = BencodeReader.Create(new StringReader("0:"));
+
+            tokenizer.Read();
+            Assert.AreEqual(BencodeToken.String, tokenizer.TokenType);
+            Assert.AreEqual(string.Empty, tokenizer.TokenStringValue);
+
+            Assert.IsFalse(tokenizer.Read());
+
+            tokenizer = BencodeReader.Create(new StringReader("1:a0:2:bb"));
+            tokenizer.Read();
+            Assert.AreEqual(BencodeToken.String, tokenizer.TokenType);
+            Assert.AreEqual("a", tokenizer.TokenStringValue);
+
+            tokenizer.Read();
+            Assert.AreEqual(BencodeToken.String, tokenizer.TokenType);
+            Assert.AreEqual(string.Empty, tokenizer.TokenStringValue);
+
+            tokenizer.Read();
+            Assert.AreEqual(BencodeToken.String, tokenizer.TokenType);
+            Assert.AreEqual("bb", tokenizer.TokenStringValue);
+
+            Assert.IsFalse(tokenizer.Read());
+        }
+
+        /// <summary>
         /// Attempts to tokenize the bencode document with deeper dictionary structure. 
         /// </summary>
         [TestMethod]
