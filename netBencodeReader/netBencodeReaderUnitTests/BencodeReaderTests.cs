@@ -16,6 +16,80 @@ namespace netBencodeReaderUnitTests
     public class BencodeReaderTests
     {
         /// <summary>
+        /// Verifies integers can be read.
+        /// </summary>
+        [TestMethod]
+        public void BencodeReader_UnitTests_VerifyIntegers()
+        {
+            var tokenizer = BencodeReader.Create(new StringReader("i24e"));
+            tokenizer.Read();
+            Assert.AreEqual("24", tokenizer.TokenStringValue);
+            Assert.AreEqual(BencodeToken.Integer, tokenizer.TokenType);
+        }
+        
+        /// <summary>
+        /// Verifies strings can be read.
+        /// </summary>
+        [TestMethod]
+        public void BencodeReader_UnitTests_VerifyStrings()
+        {
+            var tokenizer = BencodeReader.Create(new StringReader("5:hello"));
+            tokenizer.Read();
+            Assert.AreEqual("hello", tokenizer.TokenStringValue);
+            Assert.AreEqual(BencodeToken.String, tokenizer.TokenType);
+        }
+
+        /// <summary>
+        /// Verifies dictionaries can be read.
+        /// </summary>
+        [TestMethod]
+        public void BencodeReader_UnitTests_VerifyDictionaries()
+        {
+            var tokenizer = BencodeReader.Create(new StringReader("d3:key5:valuee"));
+
+            tokenizer.Read();
+            Assert.AreEqual(BencodeToken.StartDictionary, tokenizer.TokenType);
+            Assert.AreEqual(string.Empty, tokenizer.TokenStringValue);
+
+            tokenizer.Read();
+            Assert.AreEqual(BencodeToken.DictionaryKey, tokenizer.TokenType);
+            Assert.AreEqual("key", tokenizer.TokenStringValue);
+
+            tokenizer.Read();
+            Assert.AreEqual(BencodeToken.String, tokenizer.TokenType);
+            Assert.AreEqual("value", tokenizer.TokenStringValue);
+
+            tokenizer.Read();
+            Assert.AreEqual(BencodeToken.EndDictionary, tokenizer.TokenType);
+            Assert.AreEqual(string.Empty, tokenizer.TokenStringValue);
+        }
+
+        /// <summary>
+        /// Verifies lists can be read.
+        /// </summary>
+        [TestMethod]
+        public void BencodeReader_UnitTests_VerifyLists()
+        {
+            var tokenizer = BencodeReader.Create(new StringReader("l5:apple6:orangee"));
+
+            tokenizer.Read();
+            Assert.AreEqual(BencodeToken.StartArray, tokenizer.TokenType);
+            Assert.AreEqual(string.Empty, tokenizer.TokenStringValue);
+
+            tokenizer.Read();
+            Assert.AreEqual(BencodeToken.String, tokenizer.TokenType);
+            Assert.AreEqual("apple", tokenizer.TokenStringValue);
+
+            tokenizer.Read();
+            Assert.AreEqual(BencodeToken.String, tokenizer.TokenType);
+            Assert.AreEqual("orange", tokenizer.TokenStringValue);
+
+            tokenizer.Read();
+            Assert.AreEqual(BencodeToken.EndArray, tokenizer.TokenType);
+            Assert.AreEqual(string.Empty, tokenizer.TokenStringValue);
+        }
+
+        /// <summary>
         /// Attempts to tokenize the Bencode document "d4:name5:randy3:agei29e4:miscli1e2:lvee", 
         /// verifies the:
         /// - Correct bool is returned by Read() as it is called,
@@ -96,8 +170,11 @@ namespace netBencodeReaderUnitTests
             Assert.AreEqual(BencodeToken.EndDictionary, tokenizer.TokenType);
             Assert.AreEqual(string.Empty, tokenizer.TokenStringValue);
 
+            // Ensure the reader is in the correct end state
             Assert.IsFalse(tokenizer.Read());
             Assert.AreEqual(ReadState.EndOfFile, tokenizer.ReadState);
+            Assert.AreEqual(BencodeToken.None, tokenizer.TokenType);
+            Assert.AreEqual(string.Empty, tokenizer.TokenStringValue);
         }
 
         /// <summary>
