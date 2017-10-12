@@ -17,11 +17,6 @@ namespace netBencodeReader
     public sealed class BencodeReader
     {
         /// <summary>
-        /// Source of the Bencode document.
-        /// </summary>
-        private DataSourceEnum dataSource;
-
-        /// <summary>
         /// Stack to keep track how deep in a List/Dictionary structure we are.
         /// </summary>
         private readonly Stack<BencodeParseStackState> tokenTypeStack = new Stack<BencodeParseStackState>();
@@ -42,26 +37,20 @@ namespace netBencodeReader
         public ReadState ReadState { get; private set; }
 
         /// <summary>
-        /// String reader wrapping the Bencode string.
+        /// Text reader wrapping the Bencode string.
         /// </summary>
-        private StringReader stringReader;
-
-        /// <summary>
-        /// String reader wrapping the Bencode bytes.
-        /// </summary>
-        private StreamReader streamReader;
+        private TextReader textReader;
 
         /// <summary>
         /// Creates a new instance of BencodeReader.
         /// </summary>
-        /// <param name="sourceStringReader">StringReader to read the string from.</param>
+        /// <param name="sourceReader">TextReader to read the string from.</param>
         /// <returns>A new instance of BencodeReader.</returns>
-        public static BencodeReader Create(StringReader sourceStringReader)
+        public static BencodeReader Create(TextReader sourceReader)
         {
             return new BencodeReader
             {
-                dataSource = DataSourceEnum.StringReader,
-                stringReader = sourceStringReader,
+                textReader = sourceReader,
                 ReadState = ReadState.Initial
             };
         }
@@ -75,23 +64,7 @@ namespace netBencodeReader
         {
             return new BencodeReader
             {
-                dataSource = DataSourceEnum.StringReader,
-                stringReader = new StringReader(sourceString),
-                ReadState = ReadState.Initial
-            };
-        }
-
-        /// <summary>
-        /// Creates a new instance of BencodeReader.
-        /// </summary>
-        /// <param name="sourceStreamReader">StreamReader to read the string from.</param>
-        /// <returns>A new instance of BencodeReader.</returns>
-        public static BencodeReader Create(StreamReader sourceStreamReader)
-        {
-            return new BencodeReader
-            {
-                dataSource = DataSourceEnum.StreamReader,
-                streamReader = sourceStreamReader,
+                textReader = new StringReader(sourceString),
                 ReadState = ReadState.Initial
             };
         }
@@ -105,8 +78,7 @@ namespace netBencodeReader
         {
             return new BencodeReader
             {
-                dataSource = DataSourceEnum.StreamReader,
-                streamReader = new StreamReader(new MemoryStream(sourceBytes)),
+                textReader = new StreamReader(new MemoryStream(sourceBytes)),
                 ReadState = ReadState.Initial
             };
         }
@@ -120,8 +92,7 @@ namespace netBencodeReader
         {
             return new BencodeReader
             {
-                dataSource = DataSourceEnum.StreamReader,
-                streamReader = new StreamReader(sourceStream),
+                textReader = new StreamReader(sourceStream),
                 ReadState = ReadState.Initial
             };
         }
@@ -146,7 +117,7 @@ namespace netBencodeReader
             this.TokenStringValue = string.Empty;
             this.SwapDictionaryKeyState();
 
-            var readCharInt = this.ReadByte();
+            var readCharInt = this.textReader.Read();
             if (readCharInt < 0)
             {
                 // We have reached the end of the document.
@@ -236,7 +207,7 @@ namespace netBencodeReader
 
                 for (var i = 0; i < strLen; i++)
                 {
-                    readCharInt = this.ReadByte();
+                    readCharInt = this.textReader.Read();
                     if (readCharInt < 0)
                     {
                         this.ReadState = ReadState.Error;
@@ -264,11 +235,11 @@ namespace netBencodeReader
 
                 string num;
 
-                // Peek at the stringReader to see if the integer starts with '-'.
-                var peekValue = this.PeekByte();
+                // Peek at the textReader to see if the integer starts with '-'.
+                var peekValue = this.textReader.Peek();
                 if (peekValue > -1 && Convert.ToChar(peekValue) == '-')
                 {
-                    this.ReadByte();
+                    this.textReader.Read();
                     num = "-" + this.ReadDigitsToEnd();
                 }
                 else
@@ -327,14 +298,14 @@ namespace netBencodeReader
         }
 
         /// <summary>
-        /// Reads all the characters from the stringReader as long as they are digits. 
-        /// After this has run, stringReader will be pointing at the first following non-digit value.
+        /// Reads all the characters from the textReader as long as they are digits. 
+        /// After this has run, textReader will be pointing at the first following non-digit value.
         /// </summary>
         /// <returns></returns>
         private string ReadDigitsToEnd()
         {
             var str = new StringBuilder();
-            var peek = this.PeekByte();
+            var peek = this.textReader.Peek();
 
             var keepGoing = true;
 
@@ -354,10 +325,10 @@ namespace netBencodeReader
                         str.Append(asChar);
 
                         // Advance the pointer
-                        this.ReadByte();
+                        this.textReader.Read();
 
                         // Peek at the next value
-                        peek = this.PeekByte();
+                        peek = this.textReader.Peek();
                     }
                 }
             }
@@ -366,12 +337,12 @@ namespace netBencodeReader
         }
 
         /// <summary>
-        /// Reads a single character from the stringReader and ensures it exists and matches the expected one.
+        /// Reads a single character from the textReader and ensures it exists and matches the expected one.
         /// </summary>
         /// <param name="expected">Expected character.</param>
         private void ReadAndVerifyExpectedCharacter(char expected)
         {
-            var readCharInt = this.ReadByte();
+            var readCharInt = this.textReader.Read();
             if (readCharInt < 0)
             {
                 this.ReadState = ReadState.Error;
@@ -396,40 +367,6 @@ namespace netBencodeReader
         {
             return c >= '0' && c <= '9';
         }
-
-        /// <summary>
-        /// Peeks at the next byte in the stream.
-        /// </summary>
-        /// <returns>The byte.</returns>
-        private int PeekByte()
-        {
-            switch (this.dataSource)
-            {
-                case DataSourceEnum.StringReader:
-                    return this.stringReader.Peek();
-                case DataSourceEnum.StreamReader:
-                    return this.streamReader.Peek();
-                default:
-                    throw new BencodeException("Unknown or unexpected DataSource.");
-            }
-        }
-
-        /// <summary>
-        /// Reads the next byte in the stream.
-        /// </summary>
-        /// <returns>The byte.</returns>
-        private int ReadByte()
-        {
-            switch (this.dataSource)
-            {
-                case DataSourceEnum.StringReader:
-                    return this.stringReader.Read();
-                case DataSourceEnum.StreamReader:
-                    return this.streamReader.Read();
-                default:
-                    throw new BencodeException("Unknown or unexpected DataSource.");
-            }
-        }
-    }
+   }
 }
  
