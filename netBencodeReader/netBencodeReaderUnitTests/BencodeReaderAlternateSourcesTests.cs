@@ -11,7 +11,7 @@ namespace netBencodeReaderUnitTests
 
     using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-    using netBencodeReader;
+    using netBencodeReader.Tokenizer;
 
     [TestClass]
     public class BencodeReaderAlternateSourcesTests
@@ -74,19 +74,19 @@ namespace netBencodeReaderUnitTests
             Assert.IsTrue(tokenizer.Read());
             Assert.AreEqual(ReadState.InProgress, tokenizer.ReadState);
             Assert.AreEqual(BencodeToken.DictionaryKey, tokenizer.TokenType);
-            Assert.AreEqual("name", tokenizer.TokenStringValue);
+            Assert.AreEqual("name", Encoding.ASCII.GetString(tokenizer.TokenByteStringValue));
 
             // Pop the string '5:randy' off the document
             Assert.IsTrue(tokenizer.Read());
             Assert.AreEqual(ReadState.InProgress, tokenizer.ReadState);
             Assert.AreEqual(BencodeToken.String, tokenizer.TokenType);
-            Assert.AreEqual("randy", tokenizer.TokenStringValue);
+            Assert.AreEqual("randy", Encoding.ASCII.GetString(tokenizer.TokenByteStringValue));
 
             // Pop the string '3:age' off the document
             Assert.IsTrue(tokenizer.Read());
             Assert.AreEqual(ReadState.InProgress, tokenizer.ReadState);
             Assert.AreEqual(BencodeToken.DictionaryKey, tokenizer.TokenType);
-            Assert.AreEqual("age", tokenizer.TokenStringValue);
+            Assert.AreEqual("age", Encoding.ASCII.GetString(tokenizer.TokenByteStringValue));
 
             // Pop the int 'i29e' off the document
             Assert.IsTrue(tokenizer.Read());
@@ -98,7 +98,7 @@ namespace netBencodeReaderUnitTests
             Assert.IsTrue(tokenizer.Read());
             Assert.AreEqual(ReadState.InProgress, tokenizer.ReadState);
             Assert.AreEqual(BencodeToken.DictionaryKey, tokenizer.TokenType);
-            Assert.AreEqual("misc", tokenizer.TokenStringValue);
+            Assert.AreEqual("misc", Encoding.ASCII.GetString(tokenizer.TokenByteStringValue));
 
             // Pop the beginning of the list 'l' off the document
             Assert.IsTrue(tokenizer.Read());
@@ -116,7 +116,7 @@ namespace netBencodeReaderUnitTests
             Assert.IsTrue(tokenizer.Read());
             Assert.AreEqual(ReadState.InProgress, tokenizer.ReadState);
             Assert.AreEqual(BencodeToken.String, tokenizer.TokenType);
-            Assert.AreEqual("lv", tokenizer.TokenStringValue);
+            Assert.AreEqual("lv", Encoding.ASCII.GetString(tokenizer.TokenByteStringValue));
 
             // Pop the end of array 'e' off the document
             Assert.IsTrue(tokenizer.Read());

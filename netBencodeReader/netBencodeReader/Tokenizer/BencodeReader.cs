@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace netBencodeReader
+namespace netBencodeReader.Tokenizer
 {
     using System;
     using System.Collections.Generic;
@@ -26,6 +26,11 @@ namespace netBencodeReader
         /// </summary>
         public BencodeToken TokenType { get; private set; }
     
+        /// <summary>
+        /// Last found token value.
+        /// </summary>
+        public byte[] TokenByteStringValue { get; private set; }    
+        
         /// <summary>
         /// Last found token value.
         /// </summary>
@@ -114,6 +119,7 @@ namespace netBencodeReader
         {
             this.ReadState = ReadState.InProgress;
             this.TokenType = BencodeToken.None;
+            this.TokenByteStringValue = new byte[0];
             this.TokenStringValue = string.Empty;
             this.SwapDictionaryKeyState();
 
@@ -203,7 +209,7 @@ namespace netBencodeReader
                 
                 var strLen = int.Parse(numString);
 
-                var chars = new char[strLen];
+                var chars = new byte[strLen];
 
                 for (var i = 0; i < strLen; i++)
                 {
@@ -214,10 +220,10 @@ namespace netBencodeReader
                         throw new BencodeParseException("Unexpected end of BEncode document.");
                     }
 
-                    chars[i] = Convert.ToChar(readCharInt);
+                    chars[i] = (byte)readCharInt;
                 }
 
-                this.TokenStringValue = new string(chars);
+                this.TokenByteStringValue = chars;
 
                 return true;
             }

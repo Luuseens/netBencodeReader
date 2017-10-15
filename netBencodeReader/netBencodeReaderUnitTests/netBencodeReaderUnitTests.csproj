@@ -53,6 +53,7 @@
     <Compile Include="BencodeReaderAlternateSourcesTests.cs" />
     <Compile Include="BencodeWriterTests.cs" />
     <Compile Include="BencodeReaderTests.cs" />
+    <Compile Include="IntermediateDeserializerTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

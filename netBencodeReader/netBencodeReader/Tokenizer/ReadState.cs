@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace netBencodeReader
+namespace netBencodeReader.Tokenizer
 {
     public enum ReadState
     {

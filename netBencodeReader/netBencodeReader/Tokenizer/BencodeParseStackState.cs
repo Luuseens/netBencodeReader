@@ -1,4 +1,4 @@
-﻿namespace netBencodeReader
+﻿namespace netBencodeReader.Tokenizer
 {
     internal class BencodeParseStackState
     {
