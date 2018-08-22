@@ -1,14 +1,13 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{4489C620-58C1-4376-A6B8-92A4FA10D1AB}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>netBencodeReader</RootNamespace>
-    <AssemblyName>netBencodeReader</AssemblyName>
+    <ProjectGuid>{0309151B-8996-4AB3-B180-75F9FB7914C1}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>bencodeConsole</RootNamespace>
+    <AssemblyName>bencodeConsole</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -33,9 +32,6 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
-  <PropertyGroup>
-    <StartupObject />
-  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -47,33 +43,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="InternalDeser\Deserializer.cs" />
-    <None Include="InternalDeser\JsonObjectContract.cs" />
-    <Compile Include="InternalDeser\ToObject.cs" />
-    <Compile Include="Types\BEBaseObject.cs" />
-    <Compile Include="Types\BEByteString.cs" />
-    <Compile Include="Types\BEDictionary.cs" />
-    <Compile Include="Types\BEList.cs" />
-    <Compile Include="Types\BENumber.cs" />
-    <Compile Include="Tokenizer\BencodeParseStackState.cs" />
-    <Compile Include="BencodeWriter.cs" />
-    <Compile Include="Tokenizer\BencodeReader.cs" />
-    <Compile Include="Tokenizer\BencodeToken.cs" />
-    <Compile Include="Exceptions\BencodeParseException.cs" />
-    <Compile Include="Exceptions\BencodeException.cs" />
+    <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Tokenizer\ReadState.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="..\netBencodeReader\netBencodeReader.csproj">
+      <Project>{4489c620-58c1-4376-a6b8-92a4fa10d1ab}</Project>
+      <Name>netBencodeReader</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
 </Project>
